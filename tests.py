@@ -1,7 +1,12 @@
-import pytest
-import controllers
-from flask import Flask
 import os
+os.environ["FLASK_ENV"] = "testing"
+
+import pytest
+from unittest.mock import patch
+from flask import json
+import controllers
+from models import db
+
 
 os.environ["FLASK_ENV"] = "testing"
 
