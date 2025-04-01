@@ -7,6 +7,10 @@ import models
 
 app = Flask(__name__)
 
+from flask_cors import CORS
+
+CORS(app, origins=["http://localhost:3000"])
+
 @app.route("/api/auth/google", methods=["POST"])
 def google_auth():
     token = request.json.get("token")
