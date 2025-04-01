@@ -44,4 +44,17 @@ def fetch_article_by_id(article_id):
     except:
         return None
 
+
+def post_user_by_info(id, email, name, picture):
+    try:
+        users_collection = db.users
+        users_collection.update_one(
+            {"google_id": id},
+            {"$set": {"name": name, "email": email}},
+            upsert=True
+        )
+    except:
+        return None
+    
+    
         
