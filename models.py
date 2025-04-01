@@ -4,16 +4,19 @@ from flask_pymongo import PyMongo
 from pymongo import MongoClient, errors
 from bson import ObjectId
 import certifi
+from config import TestingConfig, Config
+import os
 
 
 app = Flask(__name__)
-app.config["MONGO_URI"] = "mongodb+srv://ringofthelords:frodo123@esrsdb.awdlh.mongodb.net/"
+app.config.from_object(TestingConfig if os.getenv("FLASK_ENV") == "testing" else Config)
 
 
-client = MongoClient("mongodb+srv://ringofthelords:frodo123@esrsdb.awdlh.mongodb.net/", tlsCAFile=certifi.where())
-db = client.esrsdb
+mongo_uri = app.config["MONGO_URI"]
+client = MongoClient(mongo_uri, tlsCAFile=certifi.where()) if "mongodb+srv" in mongo_uri else MongoClient(mongo_uri)
+db_name = mongo_uri.rsplit("/", 1)[-1]
+db = client[db_name]
 articles_collection = db.articles
-
 
 def fetch_all_articles(genre=None, source=None):
     """Retrieve all articles from the database."""
