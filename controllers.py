@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 from flask_cors import CORS
 
-CORS(app, origins=["http://localhost:3000"])
+CORS(app, origins=["http://localhost:5173"])
 
 @app.route("/api/auth/google", methods=["POST"])
 def google_auth():
