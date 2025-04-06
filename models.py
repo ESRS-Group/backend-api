@@ -55,6 +55,24 @@ def post_user_by_info(id, email, name, picture):
         )
     except:
         return None
+
+
+def search_articles(query):
+    """Search articles by matching query against title, summary, and source (Case Insensitive)."""
+    search_filter = {
+        "$or": [
+            {"title": {"$regex": query, "$options": "i"}},
+            {"summary": {"$regex": query, "$options": "i"}},
+            {"source": {"$regex": query, "$options": "i"}}
+        ]
+    }
+
+    articles = list(articles_collection.find(search_filter))
+
+    for article in articles:
+        article["_id"] = str(article["_id"])
+
+    return articles
     
     
         

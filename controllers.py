@@ -61,6 +61,18 @@ def get_article_by_id(id):
     return jsonify({"error": "Article not found"}), 404
 
 
+@app.route("/api/articles/search", methods=["GET"])
+def search_articles():
+    query = request.args.get("q")
+
+    if not query:
+        return jsonify({"error": "Missing search query"}), 400
+
+    articles = models.search_articles(query)
+
+    return jsonify(articles), 200
+
+
 if __name__ == "__main__":
     app.run(debug=True)
 
