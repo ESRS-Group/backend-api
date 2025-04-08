@@ -63,7 +63,8 @@ def search_articles(query):
         "$or": [
             {"title": {"$regex": query, "$options": "i"}},
             {"summary": {"$regex": query, "$options": "i"}},
-            {"source": {"$regex": query, "$options": "i"}}
+            {"source": {"$regex": query, "$options": "i"}},
+            {"genre": {"$regex": query, "$options": "i"}}
         ]
     }
 
