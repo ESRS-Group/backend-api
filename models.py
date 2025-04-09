@@ -13,6 +13,8 @@ app.config.from_object(TestingConfig if os.getenv("FLASK_ENV") == "testing" else
 
 
 mongo_uri = app.config["MONGO_URI"]
+
+
 client = MongoClient(mongo_uri, tlsCAFile=certifi.where()) if "mongodb+srv" in mongo_uri else MongoClient(mongo_uri)
 db_name = mongo_uri.rsplit("/", 1)[-1]
 db = client[db_name]
