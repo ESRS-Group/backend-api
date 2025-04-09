@@ -8,13 +8,12 @@ import controllers
 from models import db
 
 
-os.environ["FLASK_ENV"] = "testing"
-
 @pytest.fixture
 def client():
     app = controllers.app
     app.config["TESTING"] = True
     client = app.test_client()
+    print(client)
     yield client
 
 def test_get_all_articles(client):
