@@ -78,4 +78,37 @@ def search_articles(query):
     return articles
     
     
-        
+
+
+def save_comment(article_id, user_id, comment_body):
+    comments_coll = db.comments
+    try:
+        comment = {
+            "article_id": article_id,
+            "user_id": user_id,
+            "comment": comment_body
+        }
+        result = comments_coll.insert_one(comment)
+        comment["_id"] = str(result.inserted_id)
+        return comment
+    except Exception as e:
+        print("Error saving comment:", e)
+        return None
+
+def fetch_comments_by_id(article_id, limit=10):
+    comments_collection = db.comments
+    comments_cursor = comments_collection.find({"article_id": article_id}).limit(limit)
+    comments = []
+    for c in comments_cursor:
+        c["_id"] = str(c["_id"])
+        comments.append(c)
+    return comments
+
+def delete_comment_by_id(comment_id):
+    comments_coll = db.comments
+    try:
+        result = comments_coll.delete_one({"_id": ObjectId(comment_id)})
+        return result.deleted_count == 1
+    except Exception as e:
+        print("Error deleting comment:", e)
+        return False
