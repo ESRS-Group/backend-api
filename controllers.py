@@ -76,3 +76,46 @@ def search_articles():
 if __name__ == "__main__":
     app.run(debug=True)
 
+
+@app.route("/api/comments/<string:id>", methods=["POST"])
+def post_comment(id):
+    data = request.get_json() 
+    author = data.get("user_id")
+    content = data.get("comment")
+
+    if not author or not content:
+        return jsonify({"error": "Missing author or content"}), 400
+
+    
+    new_comment = models.save_comment(id, author, content)
+
+    if new_comment:
+        return jsonify({"message": "Comment added", "new_comment": new_comment}), 201
+    else:
+        return jsonify({"error": "Failed to add comment"}), 500
+    
+@app.route("/api/comments/<string:comment_id>", methods=["DELETE"])
+def delete_comment(comment_id):
+    try:
+        result = models.delete_comment_by_id(comment_id)
+        if result:
+            return jsonify({"message": "Comment deleted successfully"}), 200
+        else:
+            return jsonify({"error": "Comment not found"}), 404
+    except Exception as e:
+        print("Error is: ", e)
+        return jsonify({"error": "Server error"}), 500
+    
+@app.route("/api/comments/<string:article_id>", methods=["GET"])
+def get_comments_by_article_id(article_id):
+    limit = request.args.get("limit", default=10, type=int)
+    try:
+        result = models.fetch_comments_by_id(article_id, limit)
+        print(result)
+        if result:
+            return jsonify({"msg": "Retrieved comments.", "data": result}), 200
+        else:
+            return jsonify({"error": "Failed to retrieve comments."}), 404
+    except Exception as e:
+        print("Error is: ", e)
+        return jsonify({"error": "Server error."}), 500
