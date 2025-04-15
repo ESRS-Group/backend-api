@@ -1,11 +1,9 @@
 import os
+
 os.environ["FLASK_ENV"] = "testing"
 
 import pytest
-from unittest.mock import patch
-from flask import json
 import controllers
-from models import db
 
 
 @pytest.fixture
@@ -16,10 +14,12 @@ def client():
     print(client)
     yield client
 
+
 def test_get_all_articles(client):
     response = client.get("/api/articles")
     assert response.status_code == 200
     assert isinstance(response.json, list) or response.json == []
+
 
 def test_get_article_by_invalid_id(client):
     response = client.get("/api/articles/123invalidid")
@@ -55,8 +55,9 @@ def test_delete_comment(client):
     assert delete_response.status_code == 200
     assert delete_response.get_json()['message'] == "Comment deleted successfully"
 
+
 def test_get_comments_by_article_id(client):
-    test_comments =[
+    test_comments = [
         {
             "user_id": "LukeTheNuke",
             "comment": "This article sucks!"
@@ -79,8 +80,7 @@ def test_get_comments_by_article_id(client):
         assert post_response.status_code == 201
         # Keep a list of MongoDB's own created ID's for cleanup
         mongo_ids.append(post_response.get_json()['new_comment']['_id'])
-    
-    
+
     # Main test call, try and get all comments with this test ID
     comments_by_id = client.get("/api/comments/123comments_by_id_test")
     assert comments_by_id.status_code == 200
@@ -99,4 +99,3 @@ def test_get_comments_by_article_id(client):
     for comment_id in mongo_ids:
         cleanup = client.delete(f"/api/comments/{comment_id}")
         assert cleanup.status_code == 200
-
