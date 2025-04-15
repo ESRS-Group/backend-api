@@ -119,3 +119,31 @@ def get_comments_by_article_id(article_id):
     except Exception as e:
         print("Error is: ", e)
         return jsonify({"error": "Server error."}), 500
+    
+
+@app.route("/api/ratings/<string:article_id>", methods=['POST'])
+def post_new_rating(article_id):
+    data = request.get_json()
+    user_id = data.get("user_id")
+    accuracy = data.get("accuracy")
+    bias = data.get("bias")
+    insight = data.get("insight")
+
+    if not user_id or accuracy is None or bias is None or insight is None:
+        return jsonify({"error": "Missing one or more required fields."})
+    
+    new_rating = models.save_rating(article_id, user_id, accuracy, bias, insight)
+
+    if new_rating:
+        return jsonify({"msg": "New rating submitted", "data": new_rating}), 201
+    else:
+        return jsonify({"error": "Failed to submit rating"}), 500
+    
+
+@app.route("/api/ratings/<string:article_id>", methods=["GET"])
+def get_ratings_by_article_id(article_id):
+    try:
+        ratings = models.fetch_ratings_by_article_id(article_id)
+        return jsonify(ratings), 200
+    except Exception as e:
+        return jsonify({"error": "Failed to fetch ratings properly."}), 500

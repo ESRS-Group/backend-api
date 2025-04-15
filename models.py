@@ -112,3 +112,34 @@ def delete_comment_by_id(comment_id):
     except Exception as e:
         print("Error deleting comment:", e)
         return False
+    
+def save_rating(article_id, user_id, accuracy, bias, insight):
+    ratings_coll = db.ratings
+    try:
+        rating = {
+            "article_id": article_id,
+            "user_id": user_id,
+            "accuracy": accuracy,
+            "bias": bias,
+            "insight": insight
+        }
+
+        result = ratings_coll.insert_one(rating)
+        rating["_id"] = str(result.inserted_id)
+        return rating
+    except Exception as e:
+        print("Error saving rating.", e)
+        return None
+    
+def fetch_ratings_by_article_id(article_id):
+    ratings_coll = db.ratings
+    try:
+        ratings = list(ratings_coll.find({'article_id': article_id}))
+        for rating in ratings:
+            rating['_id'] = str(rating["_id"])
+        return ratings
+
+
+    except Exception as e:
+        print('Error fetching ratings', e)
+        return []
