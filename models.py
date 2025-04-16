@@ -143,3 +143,13 @@ def fetch_ratings_by_article_id(article_id):
     except Exception as e:
         print('Error fetching ratings', e)
         return []
+
+def fetch_details_by_user_id(user_id):
+    users = db.users
+    try:
+        user_details = users.find_one({"google_id": user_id})
+        if user_details:
+            user_details["_id"] = str(user_details["_id"])
+            return user_details
+    except Exception as e:
+        return None
