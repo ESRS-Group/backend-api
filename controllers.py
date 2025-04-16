@@ -147,3 +147,14 @@ def get_ratings_by_article_id(article_id):
         return jsonify(ratings), 200
     except Exception as e:
         return jsonify({"error": "Failed to fetch ratings properly."}), 500
+    
+
+@app.route("/api/user/<string:user_id>", methods=["GET"])
+def get_user_details_by_user_id(user_id):
+    try:
+        details = models.fetch_details_by_user_id(user_id)
+        if details is None:
+            return jsonify({"error": "User not found."}), 404
+        return jsonify(details), 200
+    except Exception as e:
+        return jsonify({"error": "Couldn't get user details."})

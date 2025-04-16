@@ -134,4 +134,11 @@ def test_get_ratings_by_article_id(client):
         assert rating.keys() == expected_keys
 
 
+def test_get_details_by_user_id(client):
+    response = client.get("/api/user/testGOOGLEid")
+    response_data = response.get_json()
 
+    assert response.status_code == 200
+    assert response_data["google_id"] == "testGOOGLEid"
+    assert response_data["email"] == "chocolatefrog@gmail.com"
+    assert response_data["name"] == "Sullivan McScott"
