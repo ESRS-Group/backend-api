@@ -99,3 +99,39 @@ def test_get_comments_by_article_id(client):
     for comment_id in mongo_ids:
         cleanup = client.delete(f"/api/comments/{comment_id}")
         assert cleanup.status_code == 200
+
+
+
+def test_post_new_rating(client):
+    rating_test = {
+        "user_id": "rating_test_user",
+        "accuracy": 12,
+        "bias": 47,
+        "insight": 87
+    }
+
+    insert_rating_response = client.post("/api/ratings/test_rating_article_id", json=rating_test)
+
+    assert insert_rating_response.status_code == 201
+
+    new_rating_data = insert_rating_response.get_json()['data']
+
+    assert new_rating_data['user_id'] == rating_test['user_id']
+    assert new_rating_data['accuracy'] == rating_test['accuracy']
+    assert new_rating_data['bias'] == rating_test['bias']
+    assert new_rating_data['insight'] == rating_test['insight']
+
+
+def test_get_ratings_by_article_id(client):
+
+    response = client.get("/api/ratings/test_get_ratings_articleID")
+    ratings_data = response.get_json()
+    assert response.status_code == 200
+    assert len(ratings_data) == 3
+
+    expected_keys = {"_id", "user_id", "article_id", "accuracy", "bias", "insight"}
+    for rating in ratings_data:
+        assert rating.keys() == expected_keys
+
+
+
