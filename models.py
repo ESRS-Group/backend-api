@@ -153,3 +153,61 @@ def fetch_details_by_user_id(user_id):
             return user_details
     except Exception as e:
         return None
+
+def create_collection(user_id, collection_name):
+    try:
+        collections = db.article_collections
+
+        existing_user = collections.find_one({"user_id": user_id})
+
+        if not existing_user:
+            new_doc = {
+                "user_id": user_id,
+                "collections": {
+                    collection_name: []
+                }
+            }
+            result = collections.insert_one(new_doc)
+            new_doc["_id"] = str(result.inserted_id)
+            return new_doc
+
+        else:
+            update_result = collections.update_one(
+                {"user_id": user_id},
+                {"$set": {f"collections.{collection_name}": []}}
+            )
+
+            if update_result.modified_count > 0:
+                return {
+                    "user_id": user_id,
+                    "collection_name": collection_name
+                }
+            else:
+                return None
+
+    except Exception as e:
+        print("Error in create_collection:", e)
+        return None
+
+
+
+def add_article_to_collection(user_id, collection_name, article_id):
+    try:
+        collections = db.article_collections
+
+        result = collections.update_one(
+            {
+                "user_id": user_id,
+                f"collections.{collection_name}": {"$exists": True}
+            },
+            {
+                "$addToSet": {
+                    f"collections.{collection_name}": article_id
+                }
+            }
+        )
+
+        return result.modified_count > 0
+    except Exception as e:
+        print("Error updating user collection:", e)
+        return False
