@@ -142,3 +142,97 @@ def test_get_details_by_user_id(client):
     assert response_data["google_id"] == "testGOOGLEid"
     assert response_data["email"] == "chocolatefrog@gmail.com"
     assert response_data["name"] == "Sullivan McScott"
+
+
+from models import db 
+
+def test_create_collection_for_new_user(client):
+    collections = db.article_collections
+    test_user_id = "new_test_user_001"
+    collection_name = "Brand New Collection"
+
+    collections.delete_one({"user_id": test_user_id})
+
+    response = client.post("/api/collections/create-new", json={
+        "user_id": test_user_id,
+        "collection_name": collection_name
+    })
+
+    assert response.status_code == 201
+    data = response.get_json()
+
+    collection_doc = data["added_collection"]
+
+    assert collection_doc["user_id"] == test_user_id
+    assert collection_doc["collections"][collection_name] == []
+
+    in_db = collections.find_one({"user_id": test_user_id})
+    assert in_db["collections"].get(collection_name) == []
+    collections.delete_one({"user_id": test_user_id})
+
+
+
+def test_add_collection_to_existing_user(client):
+    collections = db.article_collections
+    test_user_id = "existing_test_user_002"
+    first_collection = "Already Exists"
+    second_collection = "Add This One"
+
+    collections.delete_one({"user_id": test_user_id})
+    collections.insert_one({
+        "user_id": test_user_id,
+        "collections": {
+            first_collection: []
+        }
+    })
+
+    response = client.post("/api/collections/create-new", json={
+        "user_id": test_user_id,
+        "collection_name": second_collection
+    })
+
+    assert response.status_code == 201
+    data = response.get_json()
+    print(data)
+    assert data["added_collection"]["collection_name"] == second_collection
+
+
+    user_doc = collections.find_one({"user_id": test_user_id})
+    assert first_collection in user_doc["collections"]
+    assert second_collection in user_doc["collections"]
+
+   
+    collections.delete_one({"user_id": test_user_id})
+
+def test_add_article_to_user_collection(client):
+    collections = db.article_collections
+    test_user_id = "article_add_user"
+    collection_name = "Test Collection"
+    article_id = "article_123"
+
+    collections.delete_one({"user_id": test_user_id})
+
+    collections.insert_one({
+        "user_id": test_user_id,
+        "collections": {
+            collection_name: []
+        }
+    })
+
+    response = client.post("/api/collections/add-article/", json={
+        "user_id": test_user_id,
+        "collection_name": collection_name,
+        "article_id": article_id
+    })
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["message"] == "Article added to collection"
+
+
+    doc = collections.find_one({"user_id": test_user_id})
+    assert collection_name in doc["collections"]
+    assert article_id in doc["collections"][collection_name]
+
+ 
+    collections.delete_one({"user_id": test_user_id})
