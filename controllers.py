@@ -157,7 +157,7 @@ def get_user_details_by_user_id(user_id):
             return jsonify({"error": "User not found."}), 404
         return jsonify(details), 200
     except Exception as e:
-        return jsonify({"error": "Couldn't get user details."})
+        return jsonify({"error": "Couldn't get user details"})
     
 @app.route("/api/collections/create-new", methods=["POST"])
 def create_new_user_collection():
