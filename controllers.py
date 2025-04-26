@@ -209,3 +209,15 @@ def add_article_to_user_collection():
         print("Error adding article to collection:", e)
         return jsonify({"error": "Internal server error"}), 500
 
+@app.route("/api/user/<string:user_id>/comments", methods=["GET"])
+def get_comments_by_user_id(user_id):
+    limit = request.args.get("limit", default=10, type=int)
+    try:
+        result = models.fetch_comments_by_user_id(user_id, limit)
+        if result:
+            return jsonify({"msg": "Retrieved user comments.", "data": result}), 200
+        else:
+            return jsonify({"msg": "No comments found for this user.", "data": []}), 200
+    except Exception as e:
+        print("Error is: ", e)
+        return jsonify({"error": "Server error."}), 500

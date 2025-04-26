@@ -213,3 +213,15 @@ def add_article_to_collection(user_id, collection_name, article_id):
     except Exception as e:
         print("Error updating user collection:", e)
         return False
+
+def fetch_comments_by_user_id(user_id, limit=10):
+    comments_collection = db.comments
+    comments_cursor = comments_collection.find({"user_id": user_id}).limit(limit)
+    comments = []
+    for c in comments_cursor:
+        c["_id"] = str(c["_id"])
+        # Convert datetime to string for JSON serialization
+        if isinstance(c.get("timestamp"), datetime.datetime):
+            c["timestamp"] = c["timestamp"].isoformat()
+        comments.append(c)
+    return comments
