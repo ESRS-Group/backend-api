@@ -4,6 +4,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from models import db
 import models
+import datetime
 
 app = Flask(__name__)
 
@@ -79,17 +80,19 @@ if __name__ == "__main__":
 
 @app.route("/api/comments/<string:id>", methods=["POST"])
 def post_comment(id):
-    data = request.get_json() 
+    data = request.get_json()
     author = data.get("user_id")
     content = data.get("comment")
 
     if not author or not content:
         return jsonify({"error": "Missing author or content"}), 400
 
-    
     new_comment = models.save_comment(id, author, content)
 
     if new_comment:
+        # Convert datetime to string for JSON serialization
+        if isinstance(new_comment.get("timestamp"), datetime.datetime):
+            new_comment["timestamp"] = new_comment["timestamp"].isoformat()
         return jsonify({"message": "Comment added", "new_comment": new_comment}), 201
     else:
         return jsonify({"error": "Failed to add comment"}), 500

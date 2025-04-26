@@ -6,6 +6,7 @@ from bson import ObjectId
 import certifi
 from config import TestingConfig, Config
 import os
+import datetime
 
 
 app = Flask(__name__)
@@ -76,9 +77,6 @@ def search_articles(query):
         article["_id"] = str(article["_id"])
 
     return articles
-    
-    
-
 
 def save_comment(article_id, user_id, comment_body):
     comments_coll = db.comments
@@ -86,7 +84,8 @@ def save_comment(article_id, user_id, comment_body):
         comment = {
             "article_id": article_id,
             "user_id": user_id,
-            "comment": comment_body
+            "comment": comment_body,
+            "timestamp": datetime.datetime.now(datetime.UTC)
         }
         result = comments_coll.insert_one(comment)
         comment["_id"] = str(result.inserted_id)
@@ -101,6 +100,9 @@ def fetch_comments_by_id(article_id, limit=10):
     comments = []
     for c in comments_cursor:
         c["_id"] = str(c["_id"])
+        # Convert datetime to string for JSON serialization
+        if isinstance(c.get("timestamp"), datetime.datetime):
+            c["timestamp"] = c["timestamp"].isoformat()
         comments.append(c)
     return comments
 
