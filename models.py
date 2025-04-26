@@ -7,7 +7,7 @@ import certifi
 from config import TestingConfig, Config
 import os
 import datetime
-
+from datetime import timezone
 
 app = Flask(__name__)
 app.config.from_object(TestingConfig if os.getenv("FLASK_ENV") == "testing" else Config)
@@ -85,7 +85,7 @@ def save_comment(article_id, user_id, comment_body):
             "article_id": article_id,
             "user_id": user_id,
             "comment": comment_body,
-            "timestamp": datetime.datetime.now(datetime.UTC)
+            "timestamp": datetime.datetime.now(timezone.utc)
         }
         result = comments_coll.insert_one(comment)
         comment["_id"] = str(result.inserted_id)
