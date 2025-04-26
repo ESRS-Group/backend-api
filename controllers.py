@@ -160,4 +160,52 @@ def get_user_details_by_user_id(user_id):
             return jsonify({"error": "User not found."}), 404
         return jsonify(details), 200
     except Exception as e:
-        return jsonify({"error": "Couldn't get user details."})
+        return jsonify({"error": "Couldn't get user details"})
+    
+@app.route("/api/collections/create-new", methods=["POST"])
+def create_new_user_collection():
+    try:
+        data = request.get_json()
+        user_id = data.get("user_id")
+        collection_name = data.get("collection_name")
+
+        if not user_id or not collection_name:
+            return jsonify({"error": "Missing user_id or collection_name"}), 400
+
+        new_collection = models.create_collection(user_id, collection_name)
+
+        if new_collection:
+            return jsonify({
+                "message": "Collection created successfully",
+                "added_collection": new_collection
+            }), 201
+        else:
+            return jsonify({"error": "Collection could not be created"}), 500
+
+    except Exception as e:
+        print("Error creating collection:", e)
+        return jsonify({"error": "Internal server error"}), 500
+    
+
+@app.route("/api/collections/add-article/", methods=["POST"])
+def add_article_to_user_collection():
+    try:
+        data = request.get_json()
+        user_id = data.get("user_id")
+        collection_name = data.get("collection_name")
+        article_id = data.get("article_id")
+
+        if not all([user_id, collection_name, article_id]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        updated = models.add_article_to_collection(user_id, collection_name, article_id)
+
+        if updated:
+            return jsonify({"message": "Article added to collection"}), 200
+        else:
+            return jsonify({"error": "Collection not found or article already exists"}), 404
+
+    except Exception as e:
+        print("Error adding article to collection:", e)
+        return jsonify({"error": "Internal server error"}), 500
+
