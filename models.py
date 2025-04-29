@@ -252,10 +252,26 @@ def fetch_all_articles_paginated(genre=None, source=None, page=1, limit=20):
     if source:
         query["author"] = source
 
-    articles_cursor = articles_collection.find(query).skip((page-1)*limit).limit(limit)
+    # 1. Fetch ALL matching articles first
+    articles_cursor = articles_collection.find(query)
     articles = list(articles_cursor)
 
-    for article in articles:
+    # 2. Parse published date and sort manually
+    def parse_published(article):
+        try:
+            return parser.parse(article["published"])
+        except Exception:
+            return datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
+
+    articles.sort(key=parse_published, reverse=True)
+
+    # 3. Paginate manually
+    start = (page - 1) * limit
+    end = start + limit
+    paginated_articles = articles[start:end]
+
+    # 4. Format _id and published field
+    for article in paginated_articles:
         article["_id"] = str(article["_id"])
         try:
             parsed_dt = parser.parse(article["published"])
@@ -264,8 +280,8 @@ def fetch_all_articles_paginated(genre=None, source=None, page=1, limit=20):
             else:
                 parsed_dt = parsed_dt.astimezone(datetime.timezone.utc)
             article["published"] = parsed_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
-        except Exception as e:
+        except Exception:
             fallback_dt = datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
             article["published"] = fallback_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
 
-    return articles
+    return paginated_articles
