@@ -244,3 +244,28 @@ def fetch_comments_by_user_id(user_id, limit=10):
             c["timestamp"] = c["timestamp"].isoformat()
         comments.append(c)
     return comments
+
+def fetch_all_articles_paginated(genre=None, source=None, page=1, limit=20):
+    query = {}
+    if genre:
+        query["genre"] = genre
+    if source:
+        query["author"] = source
+
+    articles_cursor = articles_collection.find(query).skip((page-1)*limit).limit(limit)
+    articles = list(articles_cursor)
+
+    for article in articles:
+        article["_id"] = str(article["_id"])
+        try:
+            parsed_dt = parser.parse(article["published"])
+            if parsed_dt.tzinfo is None:
+                parsed_dt = parsed_dt.replace(tzinfo=datetime.timezone.utc)
+            else:
+                parsed_dt = parsed_dt.astimezone(datetime.timezone.utc)
+            article["published"] = parsed_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        except Exception as e:
+            fallback_dt = datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
+            article["published"] = fallback_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
+
+    return articles
