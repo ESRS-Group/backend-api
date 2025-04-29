@@ -8,6 +8,7 @@ from config import TestingConfig, Config
 import os
 import datetime
 from datetime import timezone
+from dateutil import parser
 
 app = Flask(__name__)
 app.config.from_object(TestingConfig if os.getenv("FLASK_ENV") == "testing" else Config)
@@ -34,6 +35,24 @@ def fetch_all_articles(genre=None, source=None):
 
     for article in articles:
         article["_id"] = str(article["_id"])
+        try:
+            # Parse the original published string
+            parsed_dt = parser.parse(article["published"])
+            # Normalise timezone to UTC if needed
+            if parsed_dt.tzinfo is None:
+                parsed_dt = parsed_dt.replace(tzinfo=datetime.timezone.utc)
+            else:
+                parsed_dt = parsed_dt.astimezone(datetime.timezone.utc)
+
+            # Replace "published" with formatted GMT string
+            article["published"] = parsed_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
+
+        except Exception as e:
+            fallback_dt = datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
+            article["published"] = fallback_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
+
+    # Sort based on parsed datetime again
+    articles.sort(key=lambda x: parser.parse(x["published"]), reverse=True)
 
     return articles
 
