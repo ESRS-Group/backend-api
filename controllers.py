@@ -221,3 +221,18 @@ def get_comments_by_user_id(user_id):
     except Exception as e:
         print("Error is: ", e)
         return jsonify({"error": "Server error."}), 500
+
+@app.route("/api/articles/paginated", methods=["GET"])
+def get_articles_paginated():
+    genre = request.args.get("genre")
+    source = request.args.get("source")
+    page = request.args.get("page", default=1, type=int)
+    limit = request.args.get("limit", default=20, type=int)
+
+    articles = models.fetch_all_articles_paginated(genre, source, page, limit)
+    return jsonify({
+        "page": page,
+        "limit": limit,
+        "count": len(articles),
+        "data": articles
+    }), 200
