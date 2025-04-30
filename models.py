@@ -403,3 +403,36 @@ def fetch_ratings_by_user_id(user_id, limit=None):
     except Exception as e:
         print("Error fetching user ratings:", e)
         return []
+    
+
+def delete_collection(user_id, collection_name):
+    result = db.article_collections.update_one(
+        {"user_id": user_id},
+        {"$unset": {f"collections.{collection_name}": ""}}
+    )
+    return result.modified_count > 0
+
+
+
+def remove_article_from_collection(user_id, collection_name, article_id):
+    result = db.article_collections.update_one(
+        {"user_id": user_id},
+        {"$pull": {f"collections.{collection_name}": article_id}}
+    )
+    return result.modified_count > 0
+
+
+def rename_collection(user_id, old_name, new_name):
+    user = db.article_collections.find_one({"user_id": user_id})
+    if not user or old_name not in user["collections"]:
+        return False
+
+    articles = user["collections"][old_name]
+    update = db.article_collections.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {f"collections.{new_name}": articles},
+            "$unset": {f"collections.{old_name}": ""}
+        }
+    )
+    return update.modified_count > 0
