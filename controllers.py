@@ -275,3 +275,16 @@ def get_collections_with_articles(user_id):
     except Exception as e:
         print("Error fetching collections with articles:", e)
         return jsonify({"error": "Internal server error"}), 500
+
+@app.route("/api/user/<string:user_id>/ratings", methods=["GET"])
+def get_ratings_by_user_id(user_id):
+    limit = request.args.get("limit", default=10, type=int)
+    try:
+        result = models.fetch_ratings_by_user_id(user_id, limit)
+        if result:
+            return jsonify({"msg": "Retrieved user ratings.", "data": result}), 200
+        else:
+            return jsonify({"msg": "No ratings found for this user.", "data": []}), 200
+    except Exception as e:
+        print("Error is: ", e)
+        return jsonify({"error": "Server error."}), 500

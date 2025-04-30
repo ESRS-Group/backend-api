@@ -334,3 +334,48 @@ def fetch_collections_with_articles(user_id):
     except Exception as e:
         print("Error in fetch_collections_with_articles:", e)
         return None
+
+
+def fetch_ratings_by_user_id(user_id, limit=10):
+    ratings_collection = db.ratings
+    try:
+        # Find ratings by user_id
+        ratings_cursor = ratings_collection.find({"user_id": user_id}).limit(limit)
+
+        ratings_with_details = []
+
+        for rating in ratings_cursor:
+            # Convert ObjectId to string
+            rating["_id"] = str(rating["_id"])
+
+            # Get the article details for each rating
+            try:
+                article = articles_collection.find_one({"_id": ObjectId(rating["article_id"])})
+                if article:
+                    # Add article title to the rating object
+                    rating["articleTitle"] = article.get("title", "Unknown Article")
+                    # Add timestamp if it doesn't exist
+                    if "timestamp" not in rating:
+                        rating["timestamp"] = datetime.datetime.now(timezone.utc)
+                else:
+                    rating["articleTitle"] = "Article Not Found"
+            except Exception as article_err:
+                print(f"Error fetching article for rating: {article_err}")
+                rating["articleTitle"] = "Error Loading Article"
+
+            # Convert datetime to string for JSON serialization
+            if isinstance(rating.get("timestamp"), datetime.datetime):
+                rating["timestamp"] = rating["timestamp"].isoformat()
+
+            ratings_with_details.append(rating)
+
+        # Sort by timestamp (newest first)
+        ratings_with_details.sort(
+            key=lambda x: x.get("timestamp", ""),
+            reverse=True
+        )
+
+        return ratings_with_details
+    except Exception as e:
+        print("Error fetching user ratings:", e)
+        return []
