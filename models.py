@@ -284,3 +284,53 @@ def fetch_user_collections(user_id):
     except Exception as e:
         print("Error in fetch_user_collections:", e)
         return None
+
+
+def fetch_collections_with_articles(user_id):
+    """Fetch all collections for a user with article details."""
+    try:
+        collections = db.article_collections
+        articles_coll = db.articles
+
+        user_collections = collections.find_one({"user_id": user_id})
+
+        if not user_collections:
+            return None
+
+        # Convert _id to string for JSON serialization
+        user_collections["_id"] = str(user_collections["_id"])
+
+        # For each collection, fetch the article details
+        result_collections = {}
+
+        for collection_name, article_ids in user_collections["collections"].items():
+            # Skip empty collections
+            if not article_ids:
+                result_collections[collection_name] = []
+                continue
+
+            articles = []
+            for article_id in article_ids:
+                try:
+                    # Try to convert the article_id string to ObjectId and fetch the article
+                    article = articles_coll.find_one({"_id": ObjectId(article_id)})
+                    if article:
+                        # Format article for output
+                        article = format_article_for_output(article)
+                        articles.append(article)
+                except Exception as e:
+                    # Skip any articles that can't be found or have invalid IDs
+                    print(f"Error fetching article {article_id}: {e}")
+                    continue
+
+            result_collections[collection_name] = articles
+
+        return {
+            "_id": user_collections["_id"],
+            "user_id": user_id,
+            "collections": result_collections
+        }
+
+    except Exception as e:
+        print("Error in fetch_collections_with_articles:", e)
+        return None

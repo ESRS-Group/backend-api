@@ -262,3 +262,16 @@ def get_user_collections(user_id):
     except Exception as e:
         print("Error fetching collections:", e)
         return jsonify({"error": "Internal server error"}), 500
+
+@app.route("/api/collections/<string:user_id>/with-articles", methods=["GET"])
+def get_collections_with_articles(user_id):
+    """Get all collections for a user with article details."""
+    try:
+        collections = models.fetch_collections_with_articles(user_id)
+        if collections:
+            return jsonify(collections), 200
+        else:
+            return jsonify({"message": "No collections found", "collections": {}}), 200
+    except Exception as e:
+        print("Error fetching collections with articles:", e)
+        return jsonify({"error": "Internal server error"}), 500
