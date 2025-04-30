@@ -210,9 +210,8 @@ def add_article_to_user_collection():
 
 @app.route("/api/user/<string:user_id>/comments", methods=["GET"])
 def get_comments_by_user_id(user_id):
-    limit = request.args.get("limit", default=10, type=int)
     try:
-        result = models.fetch_comments_by_user_id(user_id, limit)
+        result = models.fetch_comments_by_user_id(user_id)
         if result:
             return jsonify({"msg": "Retrieved user comments.", "data": result}), 200
         else:
