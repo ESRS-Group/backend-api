@@ -1,7 +1,6 @@
-
 from flask import Flask, jsonify, request
 from flask_pymongo import PyMongo
-from pymongo import MongoClient, errors
+from pymongo import MongoClient, errors, DESCENDING
 from bson import ObjectId
 import certifi
 from config import TestingConfig, Config
@@ -13,46 +12,49 @@ from dateutil import parser
 app = Flask(__name__)
 app.config.from_object(TestingConfig if os.getenv("FLASK_ENV") == "testing" else Config)
 
-
 mongo_uri = app.config["MONGO_URI"]
-
 
 client = MongoClient(mongo_uri, tlsCAFile=certifi.where()) if "mongodb+srv" in mongo_uri else MongoClient(mongo_uri)
 db_name = mongo_uri.rsplit("/", 1)[-1]
 db = client[db_name]
 articles_collection = db.articles
 
+
+def format_article_for_output(article):
+    """Helper function to format an article for output."""
+    if not article:
+        return None
+
+    # Convert MongoDB ObjectId to string
+    article["_id"] = str(article["_id"])
+
+    # Format the published date for frontend display
+    try:
+        # If the published field is a datetime object
+        if isinstance(article.get("published"), datetime.datetime):
+            article["published"] = article["published"].strftime("%a, %d %b %Y %H:%M:%S GMT")
+    except Exception as e:
+        # Keep original format if error
+        pass
+
+    return article
+
+
 def fetch_all_articles(genre=None, source=None):
-    """Retrieve all articles from the database."""
+    """Retrieve all articles from the database, sorted by published date."""
     query = {}
     if genre:
         query["genre"] = genre
     if source:
         query["author"] = source
 
-    articles = list(articles_collection.find(query))
-    
+    # Use MongoDB's native sorting on the date field
+    articles_cursor = articles_collection.find(query).sort("published", DESCENDING)
+    articles = list(articles_cursor)
 
+    # Format articles for output
     for article in articles:
-        article["_id"] = str(article["_id"])
-        try:
-            # Parse the original published string
-            parsed_dt = parser.parse(article["published"])
-            # Normalise timezone to UTC if needed
-            if parsed_dt.tzinfo is None:
-                parsed_dt = parsed_dt.replace(tzinfo=datetime.timezone.utc)
-            else:
-                parsed_dt = parsed_dt.astimezone(datetime.timezone.utc)
-
-            # Replace "published" with formatted GMT string
-            article["published"] = parsed_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
-
-        except Exception as e:
-            fallback_dt = datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
-            article["published"] = fallback_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
-
-    # Sort based on parsed datetime again
-    articles.sort(key=lambda x: parser.parse(x["published"]), reverse=True)
+        format_article_for_output(article)
 
     return articles
 
@@ -90,10 +92,12 @@ def search_articles(query):
         ]
     }
 
-    articles = list(articles_collection.find(search_filter))
+    # Use native sorting on the published date field
+    articles_cursor = articles_collection.find(search_filter).sort("published", DESCENDING)
+    articles = list(articles_cursor)
 
     for article in articles:
-        article["_id"] = str(article["_id"])
+        format_article_for_output(article)
 
     return articles
 
@@ -252,36 +256,15 @@ def fetch_all_articles_paginated(genre=None, source=None, page=1, limit=20):
     if source:
         query["author"] = source
 
-    # 1. Fetch ALL matching articles first
-    articles_cursor = articles_collection.find(query)
-    articles = list(articles_cursor)
+    # Calculate pagination
+    skip = (page - 1) * limit
 
-    # 2. Parse published date and sort manually
-    def parse_published(article):
-        try:
-            return parser.parse(article["published"])
-        except Exception:
-            return datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
+    # Use MongoDB's native sorting and pagination
+    articles_cursor = articles_collection.find(query).sort("published", DESCENDING).skip(skip).limit(limit)
 
-    articles.sort(key=parse_published, reverse=True)
-
-    # 3. Paginate manually
-    start = (page - 1) * limit
-    end = start + limit
-    paginated_articles = articles[start:end]
-
-    # 4. Format _id and published field
-    for article in paginated_articles:
-        article["_id"] = str(article["_id"])
-        try:
-            parsed_dt = parser.parse(article["published"])
-            if parsed_dt.tzinfo is None:
-                parsed_dt = parsed_dt.replace(tzinfo=datetime.timezone.utc)
-            else:
-                parsed_dt = parsed_dt.astimezone(datetime.timezone.utc)
-            article["published"] = parsed_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
-        except Exception:
-            fallback_dt = datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
-            article["published"] = fallback_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
+    # Format the articles for output
+    paginated_articles = []
+    for article in articles_cursor:
+        paginated_articles.append(format_article_for_output(article))
 
     return paginated_articles

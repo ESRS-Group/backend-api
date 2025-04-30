@@ -47,7 +47,7 @@ def get_articles():
     source = request.args.get("source")
     articles = models.fetch_all_articles(genre, source)
 
-    return articles, 200
+    return jsonify(articles), 200
 
 """
 Example query
@@ -222,6 +222,7 @@ def get_comments_by_user_id(user_id):
         print("Error is: ", e)
         return jsonify({"error": "Server error."}), 500
 
+
 @app.route("/api/articles/paginated", methods=["GET"])
 def get_articles_paginated():
     genre = request.args.get("genre")
@@ -230,9 +231,21 @@ def get_articles_paginated():
     limit = request.args.get("limit", default=20, type=int)
 
     articles = models.fetch_all_articles_paginated(genre, source, page, limit)
+
+    # Get the total count for pagination info
+    # This is needed since we're returning just the paginated data
+    query = {}
+    if genre:
+        query["genre"] = genre
+    if source:
+        query["author"] = source
+    total_count = models.db.articles.count_documents(query)
+
     return jsonify({
         "page": page,
         "limit": limit,
         "count": len(articles),
+        "total": total_count,
+        "pages": (total_count + limit - 1) // limit,
         "data": articles
     }), 200
