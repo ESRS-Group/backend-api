@@ -249,3 +249,16 @@ def get_articles_paginated():
         "pages": (total_count + limit - 1) // limit,
         "data": articles
     }), 200
+
+
+@app.route("/api/collections/<string:user_id>", methods=["GET"])
+def get_user_collections(user_id):
+    try:
+        collections = models.fetch_user_collections(user_id)
+        if collections:
+            return jsonify(collections), 200
+        else:
+            return jsonify({"message": "No collections found", "collections": {}}), 200
+    except Exception as e:
+        print("Error fetching collections:", e)
+        return jsonify({"error": "Internal server error"}), 500

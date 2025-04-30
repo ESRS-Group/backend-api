@@ -268,3 +268,19 @@ def fetch_all_articles_paginated(genre=None, source=None, page=1, limit=20):
         paginated_articles.append(format_article_for_output(article))
 
     return paginated_articles
+
+def fetch_user_collections(user_id):
+    """Fetch all collections for a user."""
+    try:
+        collections = db.article_collections
+
+        user_collections = collections.find_one({"user_id": user_id})
+        if user_collections:
+            user_collections["_id"] = str(user_collections["_id"])
+            return user_collections
+        else:
+            return None
+
+    except Exception as e:
+        print("Error in fetch_user_collections:", e)
+        return None
