@@ -111,10 +111,9 @@ def delete_comment(comment_id):
     
 @app.route("/api/comments/<string:article_id>", methods=["GET"])
 def get_comments_by_article_id(article_id):
-    limit = request.args.get("limit", default=10, type=int)
+    limit = request.args.get("limit", default=None, type=int)
     try:
         result = models.fetch_comments_by_id(article_id, limit)
-        print(result)
         if result:
             return jsonify({"msg": "Retrieved comments.", "data": result}), 200
         else:
@@ -278,7 +277,7 @@ def get_collections_with_articles(user_id):
 
 @app.route("/api/user/<string:user_id>/ratings", methods=["GET"])
 def get_ratings_by_user_id(user_id):
-    limit = request.args.get("limit", default=10, type=int)
+    limit = request.args.get("limit", default=None, type=int)
     try:
         result = models.fetch_ratings_by_user_id(user_id, limit)
         if result:

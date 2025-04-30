@@ -117,9 +117,18 @@ def save_comment(article_id, user_id, comment_body):
         print("Error saving comment:", e)
         return None
 
-def fetch_comments_by_id(article_id, limit=10):
+
+def fetch_comments_by_id(article_id, limit=None):
+    """
+    Fetch comments for an article with optional limit parameter.
+    """
     comments_collection = db.comments
-    comments_cursor = comments_collection.find({"article_id": article_id}).limit(limit)
+    # Only apply limit if it's specified
+    if limit:
+        comments_cursor = comments_collection.find({"article_id": article_id}).limit(limit)
+    else:
+        comments_cursor = comments_collection.find({"article_id": article_id})
+
     comments = []
     for c in comments_cursor:
         c["_id"] = str(c["_id"])
@@ -237,9 +246,18 @@ def add_article_to_collection(user_id, collection_name, article_id):
         print("Error updating user collection:", e)
         return False
 
-def fetch_comments_by_user_id(user_id, limit=10):
+
+def fetch_comments_by_user_id(user_id, limit=None):
+    """
+    Fetch comments by a user with optional limit parameter.
+    """
     comments_collection = db.comments
-    comments_cursor = comments_collection.find({"user_id": user_id}).limit(limit)
+    # Only apply limit if it's specified
+    if limit:
+        comments_cursor = comments_collection.find({"user_id": user_id}).limit(limit)
+    else:
+        comments_cursor = comments_collection.find({"user_id": user_id})
+
     comments = []
     for c in comments_cursor:
         c["_id"] = str(c["_id"])
@@ -336,11 +354,17 @@ def fetch_collections_with_articles(user_id):
         return None
 
 
-def fetch_ratings_by_user_id(user_id, limit=10):
+def fetch_ratings_by_user_id(user_id, limit=None):
+    """
+    Fetch ratings by a user with optional limit parameter.
+    """
     ratings_collection = db.ratings
     try:
-        # Find ratings by user_id
-        ratings_cursor = ratings_collection.find({"user_id": user_id}).limit(limit)
+        # Find ratings by user_id with optional limit
+        if limit:
+            ratings_cursor = ratings_collection.find({"user_id": user_id}).limit(limit)
+        else:
+            ratings_cursor = ratings_collection.find({"user_id": user_id})
 
         ratings_with_details = []
 
