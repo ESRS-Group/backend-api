@@ -37,6 +37,14 @@ def format_article_for_output(article):
         # Keep original format if error
         pass
 
+    # Fix the language field name if needed
+    if "o_language" in article:
+        article["o_language"] = article.pop("o_language")
+
+    # Or ensure consistent naming
+    if "o. language" in article:
+        article["o_language"] = article.pop("o. language")
+
     return article
 
 
