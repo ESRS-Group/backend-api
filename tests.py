@@ -236,3 +236,68 @@ def test_add_article_to_user_collection(client):
 
  
     collections.delete_one({"user_id": test_user_id})
+
+
+
+def test_delete_user_collection(client):
+    collections = db.article_collections
+    user_id = "delete_test_user"
+    collection_name = "Trash"
+
+    collections.insert_one({"user_id": user_id, "collections": {collection_name: []}})
+    response = client.delete("/api/collections/delete", json={"user_id": user_id, "collection_name": collection_name})
+
+    assert response.status_code == 200
+    doc = collections.find_one({"user_id": user_id})
+    assert collection_name not in doc["collections"]
+    collections.delete_one({"user_id": user_id})
+
+
+
+
+def test_remove_article_from_collection(client):
+    user_id = "remove_article_user"
+    collection_name = "Reading"
+    article_id = "article_to_remove"
+
+    db.article_collections.insert_one({
+        "user_id": user_id,
+        "collections": {collection_name: [article_id]}
+    })
+
+    response = client.post("/api/collections/remove-article", json={
+        "user_id": user_id,
+        "collection_name": collection_name,
+        "article_id": article_id
+    })
+
+    assert response.status_code == 200
+    doc = db.article_collections.find_one({"user_id": user_id})
+    assert article_id not in doc["collections"][collection_name]
+    db.article_collections.delete_one({"user_id": user_id})
+
+
+
+
+
+def test_rename_collection(client):
+    user_id = "rename_user"
+    old_name = "Old Name"
+    new_name = "New Name"
+
+    db.article_collections.insert_one({
+        "user_id": user_id,
+        "collections": {old_name: ["abc"]}
+    })
+
+    response = client.patch("/api/collections/rename", json={
+        "user_id": user_id,
+        "old_name": old_name,
+        "new_name": new_name
+    })
+
+    assert response.status_code == 200
+    doc = db.article_collections.find_one({"user_id": user_id})
+    assert new_name in doc["collections"]
+    assert old_name not in doc["collections"]
+    db.article_collections.delete_one({"user_id": user_id})

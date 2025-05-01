@@ -286,3 +286,69 @@ def get_ratings_by_user_id(user_id):
     except Exception as e:
         print("Error is: ", e)
         return jsonify({"error": "Server error."}), 500
+    
+
+@app.route("/api/collections/delete", methods=["DELETE"])
+def delete_collection():
+    try:
+        data = request.get_json()
+        user_id = data.get("user_id")
+        collection_name = data.get("collection_name")
+
+        if not user_id or not collection_name:
+            return jsonify({"error": "Missing required fields"}), 400
+
+        success = models.delete_collection(user_id, collection_name)
+
+        if success:
+            return jsonify({"message": "Collection deleted"}), 200
+        else:
+            return jsonify({"error": "Collection not found"}), 404
+    except Exception as e:
+        print("Error deleting collection:", e)
+        return jsonify({"error": "Internal server error"}), 500
+
+
+
+
+@app.route("/api/collections/remove-article", methods=["POST"])
+def remove_article_from_collection():
+    try:
+        data = request.get_json()
+        user_id = data.get("user_id")
+        collection_name = data.get("collection_name")
+        article_id = data.get("article_id")
+
+        if not all([user_id, collection_name, article_id]):
+            return jsonify({"error": "Missing fields"}), 400
+
+        success = models.remove_article_from_collection(user_id, collection_name, article_id)
+        if success:
+            return jsonify({"message": "Article removed"}), 200
+        else:
+            return jsonify({"error": "Collection or article not found"}), 404
+    except Exception as e:
+        print("Error removing article:", e)
+        return jsonify({"error": "Internal server error"}), 500
+
+
+
+@app.route("/api/collections/rename", methods=["PATCH"])
+def rename_collection():
+    try:
+        data = request.get_json()
+        user_id = data.get("user_id")
+        old_name = data.get("old_name")
+        new_name = data.get("new_name")
+
+        if not all([user_id, old_name, new_name]):
+            return jsonify({"error": "Missing fields"}), 400
+
+        success = models.rename_collection(user_id, old_name, new_name)
+        if success:
+            return jsonify({"message": "Collection renamed"}), 200
+        else:
+            return jsonify({"error": "Collection not found"}), 404
+    except Exception as e:
+        print("Error renaming collection:", e)
+        return jsonify({"error": "Internal server error"}), 500
