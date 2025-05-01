@@ -8,6 +8,7 @@ import os
 import datetime
 from datetime import timezone
 from dateutil import parser
+import re
 
 app = Flask(__name__)
 app.config.from_object(TestingConfig if os.getenv("FLASK_ENV") == "testing" else Config)
@@ -91,12 +92,15 @@ def post_user_by_info(id, email, name, picture):
 
 def search_articles(query):
     """Search articles by matching query against title, summary, and source (Case Insensitive)."""
+    # Escape special regex characters to prevent regex errors
+    escaped_query = re.escape(query)
+
     search_filter = {
         "$or": [
-            {"title": {"$regex": query, "$options": "i"}},
-            {"summary": {"$regex": query, "$options": "i"}},
-            {"source": {"$regex": query, "$options": "i"}},
-            {"genre": {"$regex": query, "$options": "i"}}
+            {"title": {"$regex": escaped_query, "$options": "i"}},
+            {"summary": {"$regex": escaped_query, "$options": "i"}},
+            {"source": {"$regex": escaped_query, "$options": "i"}},
+            {"genre": {"$regex": escaped_query, "$options": "i"}}
         ]
     }
 
