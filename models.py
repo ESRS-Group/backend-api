@@ -1,24 +1,22 @@
-
-from flask import Flask, jsonify, request
-from flask_pymongo import PyMongo
-from pymongo import MongoClient, errors
-from bson import ObjectId
-import certifi
-from config import TestingConfig, Config
 import os
 
+import certifi
+from bson import ObjectId
+from flask import Flask
+from pymongo import MongoClient
+
+from config import TestingConfig, Config
 
 app = Flask(__name__)
 app.config.from_object(TestingConfig if os.getenv("FLASK_ENV") == "testing" else Config)
 
-
 mongo_uri = app.config["MONGO_URI"]
-
 
 client = MongoClient(mongo_uri, tlsCAFile=certifi.where()) if "mongodb+srv" in mongo_uri else MongoClient(mongo_uri)
 db_name = mongo_uri.rsplit("/", 1)[-1]
 db = client[db_name]
 articles_collection = db.articles
+
 
 def fetch_all_articles(genre=None, source=None):
     """Retrieve all articles from the database."""
@@ -29,12 +27,12 @@ def fetch_all_articles(genre=None, source=None):
         query["author"] = source
 
     articles = list(articles_collection.find(query))
-    
 
     for article in articles:
         article["_id"] = str(article["_id"])
 
     return articles
+
 
 def fetch_article_by_id(article_id):
     """Retrieve a single article by ObjectId."""
@@ -76,8 +74,6 @@ def search_articles(query):
         article["_id"] = str(article["_id"])
 
     return articles
-    
-    
 
 
 def save_comment(article_id, user_id, comment_body):
@@ -95,6 +91,7 @@ def save_comment(article_id, user_id, comment_body):
         print("Error saving comment:", e)
         return None
 
+
 def fetch_comments_by_id(article_id, limit=10):
     comments_collection = db.comments
     comments_cursor = comments_collection.find({"article_id": article_id}).limit(limit)
@@ -103,6 +100,7 @@ def fetch_comments_by_id(article_id, limit=10):
         c["_id"] = str(c["_id"])
         comments.append(c)
     return comments
+
 
 def delete_comment_by_id(comment_id):
     comments_coll = db.comments

@@ -1,8 +1,7 @@
-
 from flask import request, jsonify, Flask
-from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
-from models import db
+from google.oauth2 import id_token
+
 import models
 
 app = Flask(__name__)
@@ -11,15 +10,17 @@ from flask_cors import CORS
 
 CORS(app, origins=["http://localhost:5173"])
 
+
 @app.route("/api/auth/google", methods=["POST"])
 def google_auth():
     token = request.json.get("token")
-    
+
     if not token:
         return jsonify({"error": "Missing token"}), 400
-    
+
     try:
-        info = id_token.verify_oauth2_token(token, google_requests.Request(), '924933737757-s0f1a66cdpi2qesbgrmov0bttu8tq7ba.apps.googleusercontent.com')
+        info = id_token.verify_oauth2_token(token, google_requests.Request(),
+            '924933737757-s0f1a66cdpi2qesbgrmov0bttu8tq7ba.apps.googleusercontent.com')
 
         user_data = {
             "google_id": info["sub"],
@@ -35,11 +36,14 @@ def google_auth():
         print("Google token verification failed:", e)
         return jsonify({"error": "Invalid token"}), 401
 
+
 """
 Example query
 /api/articles?genre=World&source=BBC-News
 
 """
+
+
 @app.route("/api/articles", methods=["GET"])
 def get_articles():
     genre = request.args.get("genre")
@@ -48,10 +52,12 @@ def get_articles():
 
     return articles, 200
 
+
 """
 Example query
 /api/articles/67bf73248d2ae870c932d262
 """
+
 
 @app.route("/api/articles/<string:id>")
 def get_article_by_id(id):
@@ -79,21 +85,21 @@ if __name__ == "__main__":
 
 @app.route("/api/comments/<string:id>", methods=["POST"])
 def post_comment(id):
-    data = request.get_json() 
+    data = request.get_json()
     author = data.get("user_id")
     content = data.get("comment")
 
     if not author or not content:
         return jsonify({"error": "Missing author or content"}), 400
 
-    
     new_comment = models.save_comment(id, author, content)
 
     if new_comment:
         return jsonify({"message": "Comment added", "new_comment": new_comment}), 201
     else:
         return jsonify({"error": "Failed to add comment"}), 500
-    
+
+
 @app.route("/api/comments/<string:comment_id>", methods=["DELETE"])
 def delete_comment(comment_id):
     try:
@@ -105,7 +111,8 @@ def delete_comment(comment_id):
     except Exception as e:
         print("Error is: ", e)
         return jsonify({"error": "Server error"}), 500
-    
+
+
 @app.route("/api/comments/<string:article_id>", methods=["GET"])
 def get_comments_by_article_id(article_id):
     limit = request.args.get("limit", default=10, type=int)

@@ -13,3 +13,4 @@ certifi==2024.2.2
 flask-cors==4.0.0
 requests==2.31.0
 Flask-PyMongo==3.0.1
+pytest~=8.3.5

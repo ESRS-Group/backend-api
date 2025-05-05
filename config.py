@@ -1,6 +1,11 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class Config:
-    MONGO_URI = "mongodb+srv://ringofthelords:frodo123@esrsdb.awdlh.mongodb.net/esrsdb"
+    MONGO_URI = os.environ["MONGO_PATH"]
+
 
 class TestingConfig(Config):
-    MONGO_URI = "mongodb+srv://ringlord:freddo3@esrstest.yf1qd.mongodb.net/esrs_test" 
+    MONGO_URI = os.environ["MONGO_TEST_PATH"]
