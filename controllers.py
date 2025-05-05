@@ -1,4 +1,5 @@
 import datetime
+import os
 
 from flask import request, jsonify, Flask
 from google.auth.transport import requests as google_requests
@@ -14,6 +15,7 @@ from flask_cors import CORS
 
 CORS(app, origins=["http://localhost:5173", "http://localhost:8000"])
 
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_SECRET")
 
 @app.route("/api/auth/google", methods=["POST"])
 def google_auth():
@@ -381,7 +383,7 @@ def google_auth_code():
             data={
                 "code": code,
                 "client_id": "924933737757-s0f1a66cdpi2qesbgrmov0bttu8tq7ba.apps.googleusercontent.com",
-                "client_secret": "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",
+                "client_secret": GOOGLE_CLIENT_SECRET,
                 "redirect_uri": redirect_uri,
                 "grant_type": "authorization_code"
             }
