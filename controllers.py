@@ -3,6 +3,7 @@ import datetime
 from flask import request, jsonify, Flask
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
+import requests
 
 import models
 from models import db
@@ -363,3 +364,56 @@ def rename_collection():
     except Exception as e:
         print("Error renaming collection:", e)
         return jsonify({"error": "Internal server error"}), 500
+
+
+@app.route("/api/auth/google/code", methods=["POST"])
+def google_auth_code():
+    code = request.json.get("code")
+    redirect_uri = request.json.get("redirect_uri")
+
+    if not code or not redirect_uri:
+        return jsonify({"error": "Missing code or redirect_uri"}), 400
+
+    try:
+        # Exchange code for token
+        token_request = requests.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": "924933737757-s0f1a66cdpi2qesbgrmov0bttu8tq7ba.apps.googleusercontent.com",
+                "client_secret": "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",
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code"
+            }
+        )
+
+        token_data = token_request.json()
+
+        if "error" in token_data:
+            return jsonify({"error": f"Token exchange failed: {token_data['error']}"}), 400
+
+        # Verify the ID token
+        id_token_value = token_data.get("id_token")
+        if not id_token_value:
+            return jsonify({"error": "No ID token in response"}), 400
+
+        # Verify the token
+        info = id_token.verify_oauth2_token(
+            id_token_value,
+            google_requests.Request(),
+            "924933737757-s0f1a66cdpi2qesbgrmov0bttu8tq7ba.apps.googleusercontent.com"
+        )
+
+        user_data = {
+            "google_id": info["sub"],
+            "email": info["email"],
+            "name": info["name"],
+            "picture": info["picture"]
+        }
+
+        models.post_user_by_info(info["sub"], info["email"], info["name"], info["picture"])
+
+        return jsonify({"msg": "User authenticated", "user": user_data}), 200
+    except Exception as e:
+        print("Google code verification failed:", e)
+        return jsonify({"error": f"Invalid code: {str(e)}"}), 401
