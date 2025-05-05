@@ -1,14 +1,14 @@
-from flask import Flask, jsonify, request
-from flask_pymongo import PyMongo
-from pymongo import MongoClient, errors, DESCENDING
-from bson import ObjectId
-import certifi
-from config import TestingConfig, Config
-import os
 import datetime
-from datetime import timezone
-from dateutil import parser
+import os
 import re
+from datetime import timezone
+
+import certifi
+from bson import ObjectId
+from flask import Flask
+from pymongo import MongoClient, DESCENDING
+
+from config import TestingConfig, Config
 
 app = Flask(__name__)
 app.config.from_object(TestingConfig if os.getenv("FLASK_ENV") == "testing" else Config)
@@ -67,6 +67,7 @@ def fetch_all_articles(genre=None, source=None):
 
     return articles
 
+
 def fetch_article_by_id(article_id):
     """Retrieve a single article by ObjectId."""
     try:
@@ -113,6 +114,7 @@ def search_articles(query):
 
     return articles
 
+
 def save_comment(article_id, user_id, comment_body):
     comments_coll = db.comments
     try:
@@ -150,6 +152,7 @@ def fetch_comments_by_id(article_id, limit=None):
         comments.append(c)
     return comments
 
+
 def delete_comment_by_id(comment_id):
     comments_coll = db.comments
     try:
@@ -158,7 +161,8 @@ def delete_comment_by_id(comment_id):
     except Exception as e:
         print("Error deleting comment:", e)
         return False
-    
+
+
 def save_rating(article_id, user_id, accuracy, bias, insight):
     ratings_coll = db.ratings
     try:
@@ -176,7 +180,8 @@ def save_rating(article_id, user_id, accuracy, bias, insight):
     except Exception as e:
         print("Error saving rating.", e)
         return None
-    
+
+
 def fetch_ratings_by_article_id(article_id):
     ratings_coll = db.ratings
     try:
@@ -190,6 +195,7 @@ def fetch_ratings_by_article_id(article_id):
         print('Error fetching ratings', e)
         return []
 
+
 def fetch_details_by_user_id(user_id):
     users = db.users
     try:
@@ -199,6 +205,7 @@ def fetch_details_by_user_id(user_id):
             return user_details
     except Exception as e:
         return None
+
 
 def create_collection(user_id, collection_name):
     try:
@@ -234,7 +241,6 @@ def create_collection(user_id, collection_name):
     except Exception as e:
         print("Error in create_collection:", e)
         return None
-
 
 
 def add_article_to_collection(user_id, collection_name, article_id):
@@ -279,6 +285,7 @@ def fetch_comments_by_user_id(user_id, limit=None):
         comments.append(c)
     return comments
 
+
 def fetch_all_articles_paginated(genre=None, source=None, page=1, limit=20):
     query = {}
     if genre:
@@ -298,6 +305,7 @@ def fetch_all_articles_paginated(genre=None, source=None, page=1, limit=20):
         paginated_articles.append(format_article_for_output(article))
 
     return paginated_articles
+
 
 def fetch_user_collections(user_id):
     """Fetch all collections for a user."""
@@ -415,7 +423,7 @@ def fetch_ratings_by_user_id(user_id, limit=None):
     except Exception as e:
         print("Error fetching user ratings:", e)
         return []
-    
+
 
 def delete_collection(user_id, collection_name):
     result = db.article_collections.update_one(
@@ -423,7 +431,6 @@ def delete_collection(user_id, collection_name):
         {"$unset": {f"collections.{collection_name}": ""}}
     )
     return result.modified_count > 0
-
 
 
 def remove_article_from_collection(user_id, collection_name, article_id):

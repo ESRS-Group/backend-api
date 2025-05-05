@@ -101,7 +101,6 @@ def test_get_comments_by_article_id(client):
         assert cleanup.status_code == 200
 
 
-
 def test_post_new_rating(client):
     rating_test = {
         "user_id": "rating_test_user",
@@ -123,7 +122,6 @@ def test_post_new_rating(client):
 
 
 def test_get_ratings_by_article_id(client):
-
     response = client.get("/api/ratings/test_get_ratings_articleID")
     ratings_data = response.get_json()
     assert response.status_code == 200
@@ -144,7 +142,8 @@ def test_get_details_by_user_id(client):
     assert response_data["name"] == "Sullivan McScott"
 
 
-from models import db 
+from models import db
+
 
 def test_create_collection_for_new_user(client):
     collections = db.article_collections
@@ -171,7 +170,6 @@ def test_create_collection_for_new_user(client):
     collections.delete_one({"user_id": test_user_id})
 
 
-
 def test_add_collection_to_existing_user(client):
     collections = db.article_collections
     test_user_id = "existing_test_user_002"
@@ -196,13 +194,12 @@ def test_add_collection_to_existing_user(client):
     print(data)
     assert data["added_collection"]["collection_name"] == second_collection
 
-
     user_doc = collections.find_one({"user_id": test_user_id})
     assert first_collection in user_doc["collections"]
     assert second_collection in user_doc["collections"]
 
-   
     collections.delete_one({"user_id": test_user_id})
+
 
 def test_add_article_to_user_collection(client):
     collections = db.article_collections
@@ -229,14 +226,11 @@ def test_add_article_to_user_collection(client):
     data = response.get_json()
     assert data["message"] == "Article added to collection"
 
-
     doc = collections.find_one({"user_id": test_user_id})
     assert collection_name in doc["collections"]
     assert article_id in doc["collections"][collection_name]
 
- 
     collections.delete_one({"user_id": test_user_id})
-
 
 
 def test_delete_user_collection(client):
@@ -251,8 +245,6 @@ def test_delete_user_collection(client):
     doc = collections.find_one({"user_id": user_id})
     assert collection_name not in doc["collections"]
     collections.delete_one({"user_id": user_id})
-
-
 
 
 def test_remove_article_from_collection(client):
@@ -275,9 +267,6 @@ def test_remove_article_from_collection(client):
     doc = db.article_collections.find_one({"user_id": user_id})
     assert article_id not in doc["collections"][collection_name]
     db.article_collections.delete_one({"user_id": user_id})
-
-
-
 
 
 def test_rename_collection(client):
