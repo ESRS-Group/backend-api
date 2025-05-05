@@ -1,10 +1,11 @@
+import datetime
 
 from flask import request, jsonify, Flask
-from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
-from models import db
+from google.oauth2 import id_token
+
 import models
-import datetime
+from models import db
 
 app = Flask(__name__)
 
@@ -12,15 +13,17 @@ from flask_cors import CORS
 
 CORS(app, origins=["http://localhost:5173"])
 
+
 @app.route("/api/auth/google", methods=["POST"])
 def google_auth():
     token = request.json.get("token")
-    
+
     if not token:
         return jsonify({"error": "Missing token"}), 400
-    
+
     try:
-        info = id_token.verify_oauth2_token(token, google_requests.Request(), '924933737757-s0f1a66cdpi2qesbgrmov0bttu8tq7ba.apps.googleusercontent.com')
+        info = id_token.verify_oauth2_token(token, google_requests.Request(),
+            '924933737757-s0f1a66cdpi2qesbgrmov0bttu8tq7ba.apps.googleusercontent.com')
 
         user_data = {
             "google_id": info["sub"],
@@ -36,11 +39,14 @@ def google_auth():
         print("Google token verification failed:", e)
         return jsonify({"error": "Invalid token"}), 401
 
+
 """
 Example query
 /api/articles?genre=World&source=BBC-News
 
 """
+
+
 @app.route("/api/articles", methods=["GET"])
 def get_articles():
     genre = request.args.get("genre")
@@ -49,10 +55,12 @@ def get_articles():
 
     return jsonify(articles), 200
 
+
 """
 Example query
 /api/articles/67bf73248d2ae870c932d262
 """
+
 
 @app.route("/api/articles/<string:id>")
 def get_article_by_id(id):
@@ -96,7 +104,8 @@ def post_comment(id):
         return jsonify({"message": "Comment added", "new_comment": new_comment}), 201
     else:
         return jsonify({"error": "Failed to add comment"}), 500
-    
+
+
 @app.route("/api/comments/<string:comment_id>", methods=["DELETE"])
 def delete_comment(comment_id):
     try:
@@ -108,7 +117,8 @@ def delete_comment(comment_id):
     except Exception as e:
         print("Error is: ", e)
         return jsonify({"error": "Server error"}), 500
-    
+
+
 @app.route("/api/comments/<string:article_id>", methods=["GET"])
 def get_comments_by_article_id(article_id):
     limit = request.args.get("limit", default=None, type=int)
@@ -121,7 +131,7 @@ def get_comments_by_article_id(article_id):
     except Exception as e:
         print("Error is: ", e)
         return jsonify({"error": "Server error."}), 500
-    
+
 
 @app.route("/api/ratings/<string:article_id>", methods=['POST'])
 def post_new_rating(article_id):
@@ -133,14 +143,14 @@ def post_new_rating(article_id):
 
     if not user_id or accuracy is None or bias is None or insight is None:
         return jsonify({"error": "Missing one or more required fields."})
-    
+
     new_rating = models.save_rating(article_id, user_id, accuracy, bias, insight)
 
     if new_rating:
         return jsonify({"msg": "New rating submitted", "data": new_rating}), 201
     else:
         return jsonify({"error": "Failed to submit rating"}), 500
-    
+
 
 @app.route("/api/ratings/<string:article_id>", methods=["GET"])
 def get_ratings_by_article_id(article_id):
@@ -149,7 +159,7 @@ def get_ratings_by_article_id(article_id):
         return jsonify(ratings), 200
     except Exception as e:
         return jsonify({"error": "Failed to fetch ratings properly."}), 500
-    
+
 
 @app.route("/api/user/<string:user_id>", methods=["GET"])
 def get_user_details_by_user_id(user_id):
@@ -160,7 +170,8 @@ def get_user_details_by_user_id(user_id):
         return jsonify(details), 200
     except Exception as e:
         return jsonify({"error": "Couldn't get user details"})
-    
+
+
 @app.route("/api/collections/create-new", methods=["POST"])
 def create_new_user_collection():
     try:
@@ -184,7 +195,7 @@ def create_new_user_collection():
     except Exception as e:
         print("Error creating collection:", e)
         return jsonify({"error": "Internal server error"}), 500
-    
+
 
 @app.route("/api/collections/add-article/", methods=["POST"])
 def add_article_to_user_collection():
@@ -207,6 +218,7 @@ def add_article_to_user_collection():
     except Exception as e:
         print("Error adding article to collection:", e)
         return jsonify({"error": "Internal server error"}), 500
+
 
 @app.route("/api/user/<string:user_id>/comments", methods=["GET"])
 def get_comments_by_user_id(user_id):
@@ -261,6 +273,7 @@ def get_user_collections(user_id):
         print("Error fetching collections:", e)
         return jsonify({"error": "Internal server error"}), 500
 
+
 @app.route("/api/collections/<string:user_id>/with-articles", methods=["GET"])
 def get_collections_with_articles(user_id):
     """Get all collections for a user with article details."""
@@ -274,6 +287,7 @@ def get_collections_with_articles(user_id):
         print("Error fetching collections with articles:", e)
         return jsonify({"error": "Internal server error"}), 500
 
+
 @app.route("/api/user/<string:user_id>/ratings", methods=["GET"])
 def get_ratings_by_user_id(user_id):
     limit = request.args.get("limit", default=None, type=int)
@@ -286,7 +300,7 @@ def get_ratings_by_user_id(user_id):
     except Exception as e:
         print("Error is: ", e)
         return jsonify({"error": "Server error."}), 500
-    
+
 
 @app.route("/api/collections/delete", methods=["DELETE"])
 def delete_collection():
@@ -309,8 +323,6 @@ def delete_collection():
         return jsonify({"error": "Internal server error"}), 500
 
 
-
-
 @app.route("/api/collections/remove-article", methods=["POST"])
 def remove_article_from_collection():
     try:
@@ -330,7 +342,6 @@ def remove_article_from_collection():
     except Exception as e:
         print("Error removing article:", e)
         return jsonify({"error": "Internal server error"}), 500
-
 
 
 @app.route("/api/collections/rename", methods=["PATCH"])
