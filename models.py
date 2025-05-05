@@ -57,6 +57,12 @@ def fetch_all_articles(genre=None, source=None):
     if source:
         query["author"] = source
 
+    # Either o_language must be "en" OR translated must be true
+    query["$or"] = [
+        {"o_language": "en"},
+        {"translated": True}
+    ]
+
     # Use MongoDB's native sorting on the date field
     articles_cursor = articles_collection.find(query).sort("published", DESCENDING)
     articles = list(articles_cursor)
@@ -102,6 +108,15 @@ def search_articles(query):
             {"summary": {"$regex": escaped_query, "$options": "i"}},
             {"source": {"$regex": escaped_query, "$options": "i"}},
             {"genre": {"$regex": escaped_query, "$options": "i"}}
+        ],
+        # Either o_language must be "en" OR translated must be true
+        "$and": [
+            {
+                "$or": [
+                    {"o_language": "en"},
+                    {"translated": True}
+                ]
+            }
         ]
     }
 
@@ -292,6 +307,12 @@ def fetch_all_articles_paginated(genre=None, source=None, page=1, limit=20):
         query["genre"] = genre
     if source:
         query["author"] = source
+
+    # Either o_language must be "en" OR translated must be true
+    query["$or"] = [
+        {"o_language": "en"},
+        {"translated": True}
+    ]
 
     # Calculate pagination
     skip = (page - 1) * limit
