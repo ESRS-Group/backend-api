@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 from flask_cors import CORS
 
-CORS(app, origins=["http://localhost:5173"])
+CORS(app, origins=["http://localhost:5173", "http://localhost:8000"])
 
 
 @app.route("/api/auth/google", methods=["POST"])
@@ -405,6 +405,7 @@ def google_auth_code():
         )
 
         user_data = {
+            "id": info["sub"],
             "google_id": info["sub"],
             "email": info["email"],
             "name": info["name"],
@@ -413,7 +414,7 @@ def google_auth_code():
 
         models.post_user_by_info(info["sub"], info["email"], info["name"], info["picture"])
 
-        return jsonify({"msg": "User authenticated", "user": user_data}), 200
+        return jsonify({"msg": "User authenticated", "user": user_data, "token": id_token_value}), 200
     except Exception as e:
         print("Google code verification failed:", e)
         return jsonify({"error": f"Invalid code: {str(e)}"}), 401
